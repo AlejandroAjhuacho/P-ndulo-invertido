@@ -1,0 +1,44 @@
+#include <PID_v1.h>
+double sp, setpoint , input, in , out , output;
+int sal, error, pwm;
+
+PID pendulo(&in , &out, &sp , 1.469 , 0.0002462 , 0 , DIRECT );
+void setup() {
+  Serial.begin(9600);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  delay(2000);
+  digitalWrite(13, 1);
+  setpoint = analogRead (A0);
+  sp = 0;
+  pendulo.SetSampleTime(10);
+  pendulo.SetMode(AUTOMATIC);
+  pendulo.SetOutputLimits(-255, 255);
+}
+void loop() {
+  input = analogRead(A0);
+  error = (setpoint - input);
+  in = error;
+  pendulo.Compute();
+  output = abs(out);
+  pwm = map (output , 0 , 10 , 0 , 255);
+  if (abs(error) > 3) {
+    if (error > 3) {
+      digitalWrite(8, HIGH);
+      digitalWrite(9, LOW);
+    } else if (error < -1){
+      digitalWrite(8, LOW);
+      digitalWrite(9, HIGH);
+    }
+    analogWrite(10, pwm);
+  } else {
+    digitalWrite(8, LOW);
+    digitalWrite(9, LOW);
+    pwm = 0;
+    analogWrite(10, pwm);
+  }
+  Serial.print("Set point :");
+  Serial.print(setpoint);
+  Serial.print("  Pwm: ");
+  Serial.println(pwm);
+}
