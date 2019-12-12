@@ -1,0 +1,58 @@
+double sp, setpoint , input, in , dt, tf ,t0 , dgdt, inputfin , out , output;
+int sal, error,pwm,vsalida2;
+double k[]={-7.0711, -2.7672, 10.7138, 1.4845}; //Ganancias obtenidas de MATLAB
+//double k[]={-7.0711, -5.6021, 25.5521, 6.0484};
+double u0, u1 , u2 , u3, utotal;
+void setup() {
+  Serial.begin(9600); //INICIALIZACIÓN PUERTO SERIAL
+  pinMode(8, OUTPUT); //
+  pinMode(9, OUTPUT); // GPIO´S
+  delay(2000); //REATARDO
+  setpoint = analogRead (A0); // ESTABLECIMIENTO SET POINT
+ //setpoint=495; 
+}
+void loop() {
+  dt = tf - t0; //DIFERENCIA DE TIEMPO 
+  t0= millis(); //TOMA DE TIEMPO T0
+  dgdt = (input - inputfin)/dt; //DERIVADA ANGULO 
+  input = analogRead(A0); // LECTURA DE ANGULO
+  error = (setpoint - input); // ERROR 
+  in = error; 
+  //LEY DE CONTROL
+  u0=(-k[0])*0; //Lectura de distancia
+  u1=(-k[1])*0; //Lectura de velocidad
+  u2=(-k[2])*in;//Lectura de angulo 
+  u3=(-k[3])*dgdt;//Lectura velocidad angular
+  utotal = u0+u1+u2+u3;
+  output = abs(utotal);
+ ///////////////////////////////////////////////
+ /////////////LÓGICA FUNCIONAMIENTO/////////////
+    pwm = map (output , 0 , 90 , 0 , 255);
+  if(pwm > 255){
+    pwm = 255;
+    }
+  if (error>3 or error<-1) {
+    if (error > 3) {
+      digitalWrite(8, HIGH);
+      digitalWrite(9, LOW);
+      analogWrite(10,pwm);
+      } else if(error < -1){
+      digitalWrite(8, LOW);
+      digitalWrite(9, HIGH);
+      analogWrite(10,pwm);
+    }
+  } else /*if(error>-2 or error<3)*/{ 
+    digitalWrite(8, LOW);
+    digitalWrite(9, LOW);
+  } 
+  Serial.print("  Error  ");
+  Serial.print(error);
+  Serial.print("  Lectura: ");
+  Serial.print(input);
+  Serial.print(" Pwm: ");
+  Serial.println(pwm);
+//////////////////////////////////////////////
+////////////FIN LÓGICA FUNCIONAMIENTO//////////
+inputfin = analogRead(A0);// LECTURA ANGULO
+tf = millis(); // LECTURA TIEMPO FINAL
+}
